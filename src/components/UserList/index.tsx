@@ -1,42 +1,30 @@
-import { useEffect, useState } from "react";
 import { Container } from "./styles";
 import { api } from "../../services/api";
-import { User } from "../../models/UserModel";
 import { UserCard } from "../UserCard";
+import { useQuery } from "react-query";
+import { EditModal } from "../EditModal";
+import { useState } from "react";
+import { User } from "../../models/UserModel";
 
 export function UserList() {
-  const [userList, setUserList] = useState<User[]>([])
-  const [loading, setLoading] = useState(false)
-  const [isError, setIsError] = useState(false)
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  async function fetchUsers() {
-    try {
-      setIsError(false)
-      setLoading(true)
-      const users = await api.getUsers();
-      setUserList(users)
-    } catch(error) {
-      setIsError(true)
-    } finally {
-      setLoading(false)
-    }
-    
-  }
-
-  function onClickEdit() {
-
-  }
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { data, isError, isLoading } = useQuery("user-list", api.getUsers);
 
   return (
     <Container>
       <h1>Lista de Usuários</h1>
-      {loading && <h3>Carregando...</h3>}
+      {isLoading && <h3>Carregando...</h3>}
       {isError && <h3>Ocorreu algum Problema </h3>}
-      {userList.map(user => <UserCard user={user} onClickEdit={onClickEdit} />)}
+      {data?.map((user) => (
+        <UserCard user={user} onClickEdit={() => setSelectedUser(user)} />
+      ))}
+      {selectedUser && (
+        <EditModal
+          user={selectedUser}
+          show={!!selectedUser}
+          handleClose={() => setSelectedUser(null)}
+        />
+      )}
     </Container>
   );
 }
